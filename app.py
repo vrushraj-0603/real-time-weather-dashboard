@@ -4,14 +4,8 @@ import requests
 from datetime import datetime
 from streamlit_autorefresh import st_autorefresh
 
-# ==========================
-# Auto Refresh (60 Seconds)
-# ==========================
 st_autorefresh(interval=60000, key="refresh")
 
-# ==========================
-# Dashboard Title
-# ==========================
 st.title("🌦 Real-Time Weather Dashboard")
 
 # ==========================
@@ -93,9 +87,7 @@ if response.status_code == 200:
     with col3:
         st.metric("💨 Wind Speed", f"{wind} km/h")
 
-    # ==========================
-    # Alert
-    # ==========================
+
     if temperature > alert_temp:
         st.error(f"⚠ Temperature crossed {alert_temp}°C")
     else:
