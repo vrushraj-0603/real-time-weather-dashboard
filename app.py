@@ -8,9 +8,7 @@ st_autorefresh(interval=60000, key="refresh")
 
 st.title("🌦 Real-Time Weather Dashboard")
 
-# ==========================
-# Sidebar
-# ==========================
+
 st.sidebar.header("Dashboard Settings")
 
 city = st.sidebar.selectbox(
