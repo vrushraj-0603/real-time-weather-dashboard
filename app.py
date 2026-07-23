@@ -48,7 +48,7 @@ alert_temp = st.sidebar.slider(
 def get_weather(city):
     url = (
         f"https://api.openweathermap.org/data/2.5/weather"
-        f"?q={city}&appid={API_KEY}&units=metric"
+        f"?q={city}&appid={5e6022f32d6804e0571b5adba9bccecc}&units=metric"
     )
 
     response = requests.get(url, timeout=10)
