@@ -13,11 +13,16 @@ st.set_page_config(
     layout="wide"
 )
 
-# Auto Refresh every 10 minutes
-st_autorefresh(interval=600000, key="refresh")
+# Auto Refresh Every 5 Minutes
+st_autorefresh(interval=300000, key="weather_refresh")
 
 st.title("🌦 Real-Time Weather Dashboard")
-st.write("Live weather information powered by Open-Meteo API")
+st.write("Live Weather Data using OpenWeatherMap API")
+
+# =====================================
+# API Key
+# =====================================
+API_KEY = "23104b4f000b96b5911a9b8a871923ed"   
 
 # =====================================
 # Sidebar
@@ -31,146 +36,92 @@ city = st.sidebar.selectbox(
 
 alert_temp = st.sidebar.slider(
     "Temperature Alert (°C)",
-    20,
-    50,
-    35
+    min_value=20,
+    max_value=50,
+    value=35
 )
 
 # =====================================
-# City Coordinates
+# Fetch Weather Data
 # =====================================
-cities = {
-    "Ahmedabad": (23.03, 72.58),
-    "Delhi": (28.61, 77.20),
-    "Mumbai": (19.07, 72.87),
-    "Bengaluru": (12.97, 77.59)
-}
-
-latitude, longitude = cities[city]
-
-# =====================================
-# API URL
-# =====================================
-url = (
-    f"https://api.open-meteo.com/v1/forecast?"
-    f"latitude={latitude}&longitude={longitude}"
-    "&current=temperature_2m,relative_humidity_2m,wind_speed_10m"
-    "&hourly=temperature_2m"
-)
-
-# =====================================
-# Cache API Data
-# =====================================
-@st.cache_data(ttl=600)
-def get_weather_data(api_url):
-
-    headers = {
-        "User-Agent": "Streamlit Weather Dashboard"
-    }
-
-    response = requests.get(
-        api_url,
-        headers=headers,
-        timeout=10
+@st.cache_data(ttl=300)
+def get_weather(city):
+    url = (
+        f"https://api.openweathermap.org/data/2.5/weather?"
+        f"q={city}&appid={API_KEY}&units=metric"
     )
 
+    response = requests.get(url, timeout=10)
     response.raise_for_status()
 
     return response.json()
 
 # =====================================
-# Fetch Data
+# Main Dashboard
 # =====================================
 try:
 
-    data = get_weather_data(url)
+    data = get_weather(city)
 
-    current = data["current"]
+    temperature = data["main"]["temp"]
+    humidity = data["main"]["humidity"]
+    wind = data["wind"]["speed"]
+    pressure = data["main"]["pressure"]
+    condition = data["weather"][0]["description"].title()
 
-    temperature = current["temperature_2m"]
-    humidity = current["relative_humidity_2m"]
-    wind = current["wind_speed_10m"]
-    weather_time = current["time"]
-
-    # =====================================
-    # Current Weather Table
-    # =====================================
     current_df = pd.DataFrame({
         "City": [city],
-        "Time": [weather_time],
         "Temperature (°C)": [temperature],
         "Humidity (%)": [humidity],
-        "Wind Speed (km/h)": [wind]
+        "Wind Speed (m/s)": [wind],
+        "Pressure (hPa)": [pressure],
+        "Condition": [condition],
+        "Timestamp": [datetime.now().strftime("%d-%m-%Y %H:%M:%S")]
     })
 
     st.subheader("Current Weather")
+    st.dataframe(current_df, use_container_width=True)
 
-    st.dataframe(
-        current_df,
-        use_container_width=True
-    )
-
-    # =====================================
     # KPI Cards
-    # =====================================
-    col1, col2, col3 = st.columns(3)
+    col1, col2, col3, col4 = st.columns(4)
 
     col1.metric("🌡 Temperature", f"{temperature:.1f} °C")
     col2.metric("💧 Humidity", f"{humidity}%")
-    col3.metric("💨 Wind Speed", f"{wind} km/h")
+    col3.metric("💨 Wind", f"{wind} m/s")
+    col4.metric("🌤 Condition", condition)
 
-    # =====================================
-    # Temperature Alert
-    # =====================================
+    # Alert
     if temperature >= alert_temp:
         st.error(f"⚠ Temperature crossed {alert_temp}°C")
     else:
         st.success("✅ Temperature is Normal")
 
-    # =====================================
-    # Forecast Chart
-    # =====================================
-    forecast_df = pd.DataFrame({
-        "Time": data["hourly"]["time"][:24],
-        "Temperature (°C)": data["hourly"]["temperature_2m"][:24]
+    # Bar Chart
+    st.subheader("Weather Overview")
+
+    chart_df = pd.DataFrame({
+        "Metric": ["Temperature", "Humidity", "Wind Speed", "Pressure"],
+        "Value": [temperature, humidity, wind, pressure]
     })
 
-    st.subheader("📈 24-Hour Temperature Forecast")
+    st.bar_chart(chart_df.set_index("Metric"))
 
-    st.line_chart(
-        forecast_df.set_index("Time"),
-        use_container_width=True
-    )
-
-    # =====================================
     # Last Updated
-    # =====================================
     st.write(
         "🕒 Last Updated:",
         datetime.now().strftime("%d-%m-%Y %H:%M:%S")
     )
 
-    # =====================================
-    # Download Button
-    # =====================================
+    # Download CSV
     st.download_button(
-        "📥 Download Current Weather",
-        current_df.to_csv(index=False),
-        "current_weather.csv",
-        "text/csv"
+        label="📥 Download Weather Report",
+        data=current_df.to_csv(index=False),
+        file_name="weather_report.csv",
+        mime="text/csv"
     )
 
-# =====================================
-# Error Handling
-# =====================================
 except requests.exceptions.HTTPError as e:
-
-    if e.response is not None and e.response.status_code == 429:
-        st.warning(
-            "⚠ Open-Meteo API rate limit reached. Please wait a few minutes and refresh the page."
-        )
-    else:
-        st.error(f"HTTP Error: {e}")
+    st.error(f"HTTP Error: {e}")
 
 except requests.exceptions.RequestException as e:
     st.error(f"Network Error: {e}")
