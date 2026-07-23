@@ -14,41 +14,47 @@ st.set_page_config(
 )
 
 # Auto Refresh Every 5 Minutes
-st_autorefresh(interval=300000, key="weather_refresh")
+st_autorefresh(interval=300000, key="refresh")
 
 st.title("🌦 Real-Time Weather Dashboard")
-st.write("Live Weather Data using OpenWeatherMap API")
+st.write("Live Weather Data using Open-Meteo API (No API Key Required)")
 
 # =====================================
-# API Key
+# City Coordinates
 # =====================================
-API_KEY = "82040fe90c09f4f6a13abe09cedd5f32"   # Replace with your active API key
+cities = {
+    "Ahmedabad": (23.0225, 72.5714),
+    "Delhi": (28.6139, 77.2090),
+    "Mumbai": (19.0760, 72.8777),
+    "Bengaluru": (12.9716, 77.5946)
+}
 
 # =====================================
 # Sidebar
 # =====================================
 st.sidebar.header("Dashboard Settings")
 
-city = st.sidebar.selectbox(
-    "Select City",
-    ["Ahmedabad", "Delhi", "Mumbai", "Bengaluru"]
-)
+city = st.sidebar.selectbox("Select City", list(cities.keys()))
 
 alert_temp = st.sidebar.slider(
     "Temperature Alert (°C)",
-    min_value=20,
-    max_value=50,
-    value=35
+    20,
+    50,
+    35
 )
+
+latitude, longitude = cities[city]
 
 # =====================================
 # Fetch Weather Data
 # =====================================
 @st.cache_data(ttl=300)
-def get_weather(city):
+def get_weather(lat, lon):
     url = (
-        f"https://api.openweathermap.org/data/2.5/weather"
-        f"?q={city}&appid=82040fe90c09f4f6a13abe09cedd5f32&units=metric"
+        f"https://api.open-meteo.com/v1/forecast"
+        f"?latitude={lat}"
+        f"&longitude={lon}"
+        f"&current=temperature_2m,relative_humidity_2m,wind_speed_10m"
     )
 
     response = requests.get(url, timeout=10)
@@ -60,44 +66,41 @@ def get_weather(city):
 # Main Dashboard
 # =====================================
 try:
-    data = get_weather(city)
+    data = get_weather(latitude, longitude)
 
-    temperature = data["main"]["temp"]
-    humidity = data["main"]["humidity"]
-    wind = data["wind"]["speed"]
-    pressure = data["main"]["pressure"]
-    condition = data["weather"][0]["description"].title()
+    current = data["current"]
 
-    current_df = pd.DataFrame({
+    temperature = current["temperature_2m"]
+    humidity = current["relative_humidity_2m"]
+    wind = current["wind_speed_10m"]
+
+    weather_df = pd.DataFrame({
         "City": [city],
         "Temperature (°C)": [temperature],
         "Humidity (%)": [humidity],
-        "Wind Speed (m/s)": [wind],
-        "Pressure (hPa)": [pressure],
-        "Condition": [condition],
-        "Timestamp": [datetime.now().strftime("%d-%m-%Y %H:%M:%S")]
+        "Wind Speed (km/h)": [wind],
+        "Last Updated": [datetime.now().strftime("%d-%m-%Y %H:%M:%S")]
     })
 
     st.subheader("📋 Current Weather")
-    st.dataframe(current_df, use_container_width=True)
+    st.dataframe(weather_df, use_container_width=True)
 
-    col1, col2, col3, col4 = st.columns(4)
+    col1, col2, col3 = st.columns(3)
 
-    col1.metric("🌡 Temperature", f"{temperature:.1f} °C")
+    col1.metric("🌡 Temperature", f"{temperature} °C")
     col2.metric("💧 Humidity", f"{humidity}%")
-    col3.metric("💨 Wind Speed", f"{wind} m/s")
-    col4.metric("🌤 Condition", condition)
+    col3.metric("💨 Wind Speed", f"{wind} km/h")
 
     if temperature >= alert_temp:
-        st.error(f"⚠ High Temperature Alert! ({temperature:.1f} °C)")
+        st.error(f"⚠ High Temperature Alert! ({temperature}°C)")
     else:
         st.success("✅ Temperature is Normal")
 
     st.subheader("📊 Weather Overview")
 
     chart_df = pd.DataFrame({
-        "Metric": ["Temperature", "Humidity", "Wind Speed", "Pressure"],
-        "Value": [temperature, humidity, wind, pressure]
+        "Metric": ["Temperature", "Humidity", "Wind Speed"],
+        "Value": [temperature, humidity, wind]
     })
 
     st.bar_chart(chart_df.set_index("Metric"))
@@ -107,7 +110,7 @@ try:
         datetime.now().strftime("%d-%m-%Y %H:%M:%S")
     )
 
-    csv = current_df.to_csv(index=False).encode("utf-8")
+    csv = weather_df.to_csv(index=False).encode("utf-8")
 
     st.download_button(
         label="📥 Download Weather Report",
@@ -116,11 +119,5 @@ try:
         mime="text/csv"
     )
 
-except requests.exceptions.HTTPError as e:
-    st.error(f"HTTP Error: {e}")
-
-except requests.exceptions.RequestException as e:
-    st.error(f"Network Error: {e}")
-
 except Exception as e:
-    st.error(f"Unexpected Error: {e}")
+    st.error(f"Error: {e}")
