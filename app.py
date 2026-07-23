@@ -22,7 +22,7 @@ st.write("Live Weather Data using OpenWeatherMap API")
 # =====================================
 # API Key
 # =====================================
-API_KEY = "5e6022f32d6804e0571b5adba9bccecc"   # Replace with your active API key
+API_KEY = "82040fe90c09f4f6a13abe09cedd5f32"   # Replace with your active API key
 
 # =====================================
 # Sidebar
@@ -48,7 +48,7 @@ alert_temp = st.sidebar.slider(
 def get_weather(city):
     url = (
         f"https://api.openweathermap.org/data/2.5/weather"
-        f"?q={city}&appid={5e6022f32d6804e0571b5adba9bccecc}&units=metric"
+        f"?q={city}&appid={}&units=metric"
     )
 
     response = requests.get(url, timeout=10)
