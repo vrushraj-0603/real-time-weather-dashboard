@@ -17,7 +17,7 @@ st.set_page_config(
 st_autorefresh(interval=300000, key="refresh")
 
 st.title("🌦 Real-Time Weather Dashboard")
-st.write("Live Weather Data using Open-Meteo API (No API Key Required)")
+st.write("Live Weather Data using Open-Meteo API")
 
 # =====================================
 # City Coordinates
@@ -38,9 +38,9 @@ city = st.sidebar.selectbox("Select City", list(cities.keys()))
 
 alert_temp = st.sidebar.slider(
     "Temperature Alert (°C)",
-    20,
-    50,
-    35
+    min_value=20,
+    max_value=50,
+    value=35
 )
 
 latitude, longitude = cities[city]
@@ -63,11 +63,10 @@ def get_weather(lat, lon):
     return response.json()
 
 # =====================================
-# Main Dashboard
+# Dashboard
 # =====================================
 try:
     data = get_weather(latitude, longitude)
-
     current = data["current"]
 
     temperature = current["temperature_2m"]
@@ -87,15 +86,22 @@ try:
 
     col1, col2, col3 = st.columns(3)
 
-    col1.metric("🌡 Temperature", f"{temperature} °C")
-    col2.metric("💧 Humidity", f"{humidity}%")
-    col3.metric("💨 Wind Speed", f"{wind} km/h")
+    with col1:
+        st.metric("🌡 Temperature", f"{temperature} °C")
 
+    with col2:
+        st.metric("💧 Humidity", f"{humidity}%")
+
+    with col3:
+        st.metric("💨 Wind Speed", f"{wind} km/h")
+
+    # Temperature Alert
     if temperature >= alert_temp:
         st.error(f"⚠ High Temperature Alert! ({temperature}°C)")
     else:
         st.success("✅ Temperature is Normal")
 
+    # Chart
     st.subheader("📊 Weather Overview")
 
     chart_df = pd.DataFrame({
@@ -105,11 +111,13 @@ try:
 
     st.bar_chart(chart_df.set_index("Metric"))
 
+    # Last Updated
     st.write(
         "🕒 Last Updated:",
         datetime.now().strftime("%d-%m-%Y %H:%M:%S")
     )
 
+    # Download CSV
     csv = weather_df.to_csv(index=False).encode("utf-8")
 
     st.download_button(
@@ -120,4 +128,4 @@ try:
     )
 
 except Exception as e:
-    st.error(f"Error: {e}")
+    st.error(f"Error fetching weather data: {e}")
