@@ -7,10 +7,13 @@ from streamlit_autorefresh import st_autorefresh
 # =====================================
 # Page Configuration
 # =====================================
-st.set_page_config(page_title="Real-Time Weather Dashboard", layout="wide")
+st.set_page_config(
+    page_title="Real-Time Weather Dashboard",
+    layout="wide"
+)
 
-# Auto Refresh every 60 seconds
-st_autorefresh(interval=60000, key="refresh")
+# Auto Refresh every 5 minutes
+st_autorefresh(interval=300000, key="refresh")
 
 st.title("🌦 Real-Time Weather Dashboard")
 
@@ -54,13 +57,19 @@ url = (
 )
 
 # =====================================
-# Fetch Live Data
+# Cache API Data (5 Minutes)
+# =====================================
+@st.cache_data(ttl=300)
+def get_weather_data(api_url):
+    response = requests.get(api_url, timeout=10)
+    response.raise_for_status()
+    return response.json()
+
+# =====================================
+# Fetch Data
 # =====================================
 try:
-    response = requests.get(url, timeout=10)
-    response.raise_for_status()
-
-    data = response.json()
+    data = get_weather_data(url)
 
     current = data["current"]
 
@@ -123,19 +132,23 @@ try:
     )
 
     # =====================================
-    # Download CSV
+    # Download Button
     # =====================================
     st.download_button(
-        "📥 Download Current Weather",
-        current_df.to_csv(index=False),
+        label="📥 Download Current Weather",
+        data=current_df.to_csv(index=False),
         file_name="current_weather.csv",
         mime="text/csv"
     )
 
+except requests.exceptions.HTTPError as e:
+    if e.response is not None and e.response.status_code == 429:
+        st.warning("⚠ API request limit reached. Please wait a few minutes and try again.")
+    else:
+        st.error(f"HTTP Error: {e}")
+
 except requests.exceptions.RequestException as e:
-    st.error("Unable to fetch weather data.")
-    st.exception(e)
+    st.error(f"Network Error: {e}")
 
 except Exception as e:
-    st.error("An unexpected error occurred.")
-    st.exception(e)
+    st.error(f"Unexpected Error: {e}")
