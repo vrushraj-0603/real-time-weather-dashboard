@@ -22,7 +22,7 @@ st.write("Live Weather Data using OpenWeatherMap API")
 # =====================================
 # API Key
 # =====================================
-API_KEY = "YOUR_API_KEY"   # Replace with your active API key
+API_KEY = "5e6022f32d6804e0571b5adba9bccecc"   # Replace with your active API key
 
 # =====================================
 # Sidebar
