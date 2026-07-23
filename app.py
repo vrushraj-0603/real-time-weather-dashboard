@@ -4,11 +4,19 @@ import requests
 from datetime import datetime
 from streamlit_autorefresh import st_autorefresh
 
+# =====================================
+# Page Configuration
+# =====================================
+st.set_page_config(page_title="Real-Time Weather Dashboard", layout="wide")
+
+# Auto Refresh every 60 seconds
 st_autorefresh(interval=60000, key="refresh")
 
 st.title("🌦 Real-Time Weather Dashboard")
 
-
+# =====================================
+# Sidebar
+# =====================================
 st.sidebar.header("Dashboard Settings")
 
 city = st.sidebar.selectbox(
@@ -23,9 +31,9 @@ alert_temp = st.sidebar.slider(
     value=35
 )
 
-# ==========================
+# =====================================
 # City Coordinates
-# ==========================
+# =====================================
 cities = {
     "Ahmedabad": (23.03, 72.58),
     "Delhi": (28.61, 77.20),
@@ -35,9 +43,9 @@ cities = {
 
 latitude, longitude = cities[city]
 
-# ==========================
-# API Request
-# ==========================
+# =====================================
+# API URL
+# =====================================
 url = (
     f"https://api.open-meteo.com/v1/forecast?"
     f"latitude={latitude}&longitude={longitude}"
@@ -45,83 +53,89 @@ url = (
     "&hourly=temperature_2m"
 )
 
-response = requests.get(url)
-
-if response.status_code == 200:
+# =====================================
+# Fetch Live Data
+# =====================================
+try:
+    response = requests.get(url, timeout=10)
+    response.raise_for_status()
 
     data = response.json()
+
     current = data["current"]
 
     temperature = current["temperature_2m"]
     humidity = current["relative_humidity_2m"]
     wind = current["wind_speed_10m"]
-    time = current["time"]
+    weather_time = current["time"]
 
-    # ==========================
+    # =====================================
     # Current Weather Table
-    # ==========================
+    # =====================================
     current_df = pd.DataFrame({
         "City": [city],
-        "Time": [time],
+        "Time": [weather_time],
         "Temperature (°C)": [temperature],
         "Humidity (%)": [humidity],
         "Wind Speed (km/h)": [wind]
     })
 
     st.subheader("Current Weather")
-    st.dataframe(current_df)
+    st.dataframe(current_df, use_container_width=True)
 
-    # ==========================
-    # Metrics
-    # ==========================
+    # =====================================
+    # KPI Metrics
+    # =====================================
     col1, col2, col3 = st.columns(3)
 
-    with col1:
-        st.metric("🌡 Temperature", f"{temperature} °C")
+    col1.metric("🌡 Temperature", f"{temperature} °C")
+    col2.metric("💧 Humidity", f"{humidity}%")
+    col3.metric("💨 Wind Speed", f"{wind} km/h")
 
-    with col2:
-        st.metric("💧 Humidity", f"{humidity}%")
-
-    with col3:
-        st.metric("💨 Wind Speed", f"{wind} km/h")
-
-
-    if temperature > alert_temp:
+    # =====================================
+    # Temperature Alert
+    # =====================================
+    if temperature >= alert_temp:
         st.error(f"⚠ Temperature crossed {alert_temp}°C")
     else:
         st.success("✅ Temperature is Normal")
 
-    # ==========================
-    # 24-Hour Forecast
-    # ==========================
-    hours = data["hourly"]["time"][:24]
-    temperatures = data["hourly"]["temperature_2m"][:24]
-
+    # =====================================
+    # Forecast Chart
+    # =====================================
     forecast_df = pd.DataFrame({
-        "Time": hours,
-        "Temperature (°C)": temperatures
+        "Time": data["hourly"]["time"][:24],
+        "Temperature (°C)": data["hourly"]["temperature_2m"][:24]
     })
 
     st.subheader("📈 24-Hour Temperature Forecast")
-    st.line_chart(forecast_df.set_index("Time"))
+    st.line_chart(
+        forecast_df.set_index("Time"),
+        use_container_width=True
+    )
 
-    # ==========================
+    # =====================================
     # Last Updated
-    # ==========================
+    # =====================================
     st.write(
         "🕒 Last Updated:",
         datetime.now().strftime("%d-%m-%Y %H:%M:%S")
     )
 
-    # ==========================
-    # Download Button
-    # ==========================
+    # =====================================
+    # Download CSV
+    # =====================================
     st.download_button(
-        label="📥 Download Current Weather",
-        data=current_df.to_csv(index=False),
+        "📥 Download Current Weather",
+        current_df.to_csv(index=False),
         file_name="current_weather.csv",
         mime="text/csv"
     )
 
-else:
-    st.error("Unable to fetch weather data. Please try again later.")
+except requests.exceptions.RequestException as e:
+    st.error("Unable to fetch weather data.")
+    st.exception(e)
+
+except Exception as e:
+    st.error("An unexpected error occurred.")
+    st.exception(e)
