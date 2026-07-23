@@ -9,13 +9,15 @@ from streamlit_autorefresh import st_autorefresh
 # =====================================
 st.set_page_config(
     page_title="Real-Time Weather Dashboard",
+    page_icon="🌦",
     layout="wide"
 )
 
-# Auto Refresh every 5 minutes
-st_autorefresh(interval=300000, key="refresh")
+# Auto Refresh every 10 minutes
+st_autorefresh(interval=600000, key="refresh")
 
 st.title("🌦 Real-Time Weather Dashboard")
+st.write("Live weather information powered by Open-Meteo API")
 
 # =====================================
 # Sidebar
@@ -29,9 +31,9 @@ city = st.sidebar.selectbox(
 
 alert_temp = st.sidebar.slider(
     "Temperature Alert (°C)",
-    min_value=20,
-    max_value=50,
-    value=35
+    20,
+    50,
+    35
 )
 
 # =====================================
@@ -57,18 +59,30 @@ url = (
 )
 
 # =====================================
-# Cache API Data (5 Minutes)
+# Cache API Data
 # =====================================
-@st.cache_data(ttl=300)
+@st.cache_data(ttl=600)
 def get_weather_data(api_url):
-    response = requests.get(api_url, timeout=10)
+
+    headers = {
+        "User-Agent": "Streamlit Weather Dashboard"
+    }
+
+    response = requests.get(
+        api_url,
+        headers=headers,
+        timeout=10
+    )
+
     response.raise_for_status()
+
     return response.json()
 
 # =====================================
 # Fetch Data
 # =====================================
 try:
+
     data = get_weather_data(url)
 
     current = data["current"]
@@ -90,14 +104,18 @@ try:
     })
 
     st.subheader("Current Weather")
-    st.dataframe(current_df, use_container_width=True)
+
+    st.dataframe(
+        current_df,
+        use_container_width=True
+    )
 
     # =====================================
-    # KPI Metrics
+    # KPI Cards
     # =====================================
     col1, col2, col3 = st.columns(3)
 
-    col1.metric("🌡 Temperature", f"{temperature} °C")
+    col1.metric("🌡 Temperature", f"{temperature:.1f} °C")
     col2.metric("💧 Humidity", f"{humidity}%")
     col3.metric("💨 Wind Speed", f"{wind} km/h")
 
@@ -118,6 +136,7 @@ try:
     })
 
     st.subheader("📈 24-Hour Temperature Forecast")
+
     st.line_chart(
         forecast_df.set_index("Time"),
         use_container_width=True
@@ -135,15 +154,21 @@ try:
     # Download Button
     # =====================================
     st.download_button(
-        label="📥 Download Current Weather",
-        data=current_df.to_csv(index=False),
-        file_name="current_weather.csv",
-        mime="text/csv"
+        "📥 Download Current Weather",
+        current_df.to_csv(index=False),
+        "current_weather.csv",
+        "text/csv"
     )
 
+# =====================================
+# Error Handling
+# =====================================
 except requests.exceptions.HTTPError as e:
+
     if e.response is not None and e.response.status_code == 429:
-        st.warning("⚠ API request limit reached. Please wait a few minutes and try again.")
+        st.warning(
+            "⚠ Open-Meteo API rate limit reached. Please wait a few minutes and refresh the page."
+        )
     else:
         st.error(f"HTTP Error: {e}")
 
