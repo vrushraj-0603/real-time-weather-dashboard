@@ -1,25 +1,23 @@
-# 🌦 Real-Time Weather Dashboard
+# Real-Time Weather Dashboard
 
-A Real-Time Weather Dashboard built using **Python**, **Streamlit**, **Pandas**, **Requests**, and the **Open-Meteo API**. The dashboard fetches live weather data and displays it through an interactive interface with weather metrics, visualizations, automatic refresh, temperature alerts, and CSV report downloads.
+## Overview
 
-## 📌 Project Objective
+The **Real-Time Weather Dashboard** is a web application developed using **Python**, **Streamlit**, and the **Open-Meteo API**. It provides live weather information for multiple cities, including **Temperature**, **Humidity**, and **Wind Speed**. The dashboard features automatic data refresh, weather visualization, temperature alerts, and CSV report downloads.
 
-The objective of this project is to build a real-time weather analytics dashboard that collects live weather data from an API, processes the data, visualizes key weather metrics, and provides users with an easy-to-use dashboard.
+---
 
-## 🚀 Features
+## Objectives
 
-- 🌍 Multiple city selection
-- 🌡 Real-time temperature
-- 💧 Humidity monitoring
-- 💨 Wind speed monitoring
-- 📊 Interactive weather visualization
-- ⚠ Temperature alert system
-- 🔄 Auto-refresh every 5 minutes
-- 📥 Download weather report as CSV
-- 🕒 Last updated timestamp
-- 📱 Responsive Streamlit interface
+- Fetch real-time weather data using the Open-Meteo API.
+- Display live weather metrics for multiple cities.
+- Visualize weather information using interactive charts.
+- Provide temperature alerts based on user-defined thresholds.
+- Allow users to download weather reports as CSV files.
+- Build and deploy an interactive Streamlit dashboard.
 
-## 🛠 Technologies Used
+---
+
+## Technologies Used
 
 - Python
 - Streamlit
@@ -27,78 +25,104 @@ The objective of this project is to build a real-time weather analytics dashboar
 - Requests
 - Open-Meteo API
 
-## 📁 Project Structure
+---
 
+## Dataset
+
+This project uses **live weather data** fetched directly from the **Open-Meteo API**.
+
+Weather information includes:
+
+- City
+- Temperature (°C)
+- Humidity (%)
+- Wind Speed (km/h)
+- Last Updated Time
+
+---
+
+## Project Workflow
+
+1. Import the required Python libraries.
+2. Select a city from the sidebar.
+3. Fetch live weather data using the Open-Meteo API.
+4. Process the JSON response.
+5. Display current weather metrics.
+6. Generate temperature alerts.
+7. Visualize weather data using a bar chart.
+8. Allow users to download the weather report as a CSV file.
+9. Automatically refresh data every 5 minutes.
+
+---
+
+## Live Demo
+
+**Streamlit Application**
+
+https://real-time-weather-dashboard-4zeertj3mneqfqw3lapaqj.streamlit.app/
+
+---
+
+## Project Files
+
+```text
+README.md
+app.py
+requirements.txt
+Dashboard_Screenshot.png
 ```
-real-time-weather-dashboard/
-│── app.py
-│── requirements.txt
-│── README.md
-```
 
-## ⚙ Installation
+---
 
-Clone the repository:
+## Dashboard Features
 
-```bash
-git clone https://github.com/your-username/real-time-weather-dashboard.git
-```
+- Multiple City Selection
+- Live Temperature
+- Live Humidity
+- Live Wind Speed
+- Weather Metrics Cards
+- Temperature Alert System
+- Weather Overview Bar Chart
+- CSV Report Download
+- Automatic Refresh (Every 5 Minutes)
+- Last Updated Timestamp
 
-Go to the project folder:
+---
 
-```bash
-cd real-time-weather-dashboard
-```
+## Dashboard Insights
 
-Install dependencies:
+- Displays real-time weather conditions.
+- Allows comparison of weather across different cities.
+- Generates alerts when the temperature exceeds the selected threshold.
+- Provides downloadable weather reports for further analysis.
+- Automatically refreshes to ensure up-to-date information.
+
+---
+
+## Requirements
+
+Install the required libraries:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-Run the application:
+Run the Streamlit application:
 
 ```bash
 streamlit run app.py
 ```
 
-## 📊 Dashboard Features
+---
 
-- Current Temperature
-- Current Humidity
-- Current Wind Speed
-- Weather Metrics
-- Temperature Alert
-- Weather Bar Chart
-- CSV Download
-- Automatic Refresh
+## Project Outcome
 
-## 🌐 Data Source
+This project demonstrates how real-time data can be collected, processed, and visualized using Python and Streamlit. It showcases API integration, dashboard development, and interactive data visualization for monitoring live weather conditions.
 
-**Open-Meteo API**
+---
 
-https://open-meteo.com/
+## Author
 
-## 📦 Requirements
+**Vrushraj**
 
-```
-streamlit
-pandas
-requests
-streamlit-autorefresh
-```
-
-## 📚 Learning Outcomes
-
-- API Integration
-- Data Collection
-- Data Processing
-- Data Visualization
-- Dashboard Development
-- Streamlit Deployment
-- Real-Time Data Analytics
-
-
-## 👨‍💻 Author
-vrushraj
-.
+**Data Analytics Internship Project**
