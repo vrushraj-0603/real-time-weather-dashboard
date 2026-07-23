@@ -22,7 +22,7 @@ st.write("Live Weather Data using OpenWeatherMap API")
 # =====================================
 # API Key
 # =====================================
-API_KEY = "23104b4f000b96b5911a9b8a871923ed"   
+API_KEY = "YOUR_API_KEY"   # Replace with your active API key
 
 # =====================================
 # Sidebar
@@ -46,10 +46,10 @@ alert_temp = st.sidebar.slider(
 # =====================================
 @st.cache_data(ttl=300)
 def get_weather(city):
-   url = (
-    f"https://api.openweathermap.org/data/2.5/weather?"
-    f"q={city}&appid={API_KEY}&units=metric"
-)
+    url = (
+        f"https://api.openweathermap.org/data/2.5/weather"
+        f"?q={city}&appid={API_KEY}&units=metric"
+    )
 
     response = requests.get(url, timeout=10)
     response.raise_for_status()
@@ -60,7 +60,6 @@ def get_weather(city):
 # Main Dashboard
 # =====================================
 try:
-
     data = get_weather(city)
 
     temperature = data["main"]["temp"]
@@ -79,25 +78,22 @@ try:
         "Timestamp": [datetime.now().strftime("%d-%m-%Y %H:%M:%S")]
     })
 
-    st.subheader("Current Weather")
+    st.subheader("📋 Current Weather")
     st.dataframe(current_df, use_container_width=True)
 
-    # KPI Cards
     col1, col2, col3, col4 = st.columns(4)
 
     col1.metric("🌡 Temperature", f"{temperature:.1f} °C")
     col2.metric("💧 Humidity", f"{humidity}%")
-    col3.metric("💨 Wind", f"{wind} m/s")
+    col3.metric("💨 Wind Speed", f"{wind} m/s")
     col4.metric("🌤 Condition", condition)
 
-    # Alert
     if temperature >= alert_temp:
-        st.error(f"⚠ Temperature crossed {alert_temp}°C")
+        st.error(f"⚠ High Temperature Alert! ({temperature:.1f} °C)")
     else:
         st.success("✅ Temperature is Normal")
 
-    # Bar Chart
-    st.subheader("Weather Overview")
+    st.subheader("📊 Weather Overview")
 
     chart_df = pd.DataFrame({
         "Metric": ["Temperature", "Humidity", "Wind Speed", "Pressure"],
@@ -106,16 +102,16 @@ try:
 
     st.bar_chart(chart_df.set_index("Metric"))
 
-    # Last Updated
     st.write(
         "🕒 Last Updated:",
         datetime.now().strftime("%d-%m-%Y %H:%M:%S")
     )
 
-    # Download CSV
+    csv = current_df.to_csv(index=False).encode("utf-8")
+
     st.download_button(
         label="📥 Download Weather Report",
-        data=current_df.to_csv(index=False),
+        data=csv,
         file_name="weather_report.csv",
         mime="text/csv"
     )
